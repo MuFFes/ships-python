@@ -1,0 +1,32 @@
+TILE_SIZE_PX = 50
+FIELD_SPACING = 2
+FIELD_SIZE = 11
+WINDOW_WIDTH = (2 * FIELD_SIZE + FIELD_SPACING)
+WINDOW_WIDTH_PX = WINDOW_WIDTH * TILE_SIZE_PX
+WINDOW_HEIGHT = FIELD_SIZE + 1
+WINDOW_HEIGHT_PX = WINDOW_HEIGHT * TILE_SIZE_PX
+WINDOW_SIZE = f"{WINDOW_WIDTH_PX}x{WINDOW_HEIGHT_PX}"
+FONT_BASE = {
+    "family": "Arial",
+    "size": 20
+}
+FONT_SECONDARY = {
+    "family": "Arial",
+    "size": 13,
+    "weight": "bold"
+}
+FONT_TITLE = {
+    "family": "Permanent Marker",
+    "size": 60
+}
+FONT_MONOSPACE = {
+    "family": "Inconsolata",
+    "size": 13
+}
+
+COLOR_PETER_RIVER   = "#3498DB"
+COLOR_ALIZARIN      = "#E74C3C"
+COLOR_MIDNIGHT_BLUE = "#2C3E50"
+COLOR_CLOUDS        = "#ECF0F1"
+COLOR_SILVER        = "#BDC3C7"
+COLOR_CONCRETE      = "#95A5A6"
