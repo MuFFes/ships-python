@@ -1,6 +1,7 @@
 import constants
 import assets
-import maincontroller
+import serverconnection
+import Controllers.maincontroller
 
 
 def draw_tile(canvas, x, y, field, tile_type, font):
@@ -32,6 +33,6 @@ def infield(x, y):
 
 
 if __name__ == '__main__':
-    app = maincontroller.MainController()
+    app = Controllers.maincontroller.MainController()
     assets.Assets.load()
     app.mainloop()

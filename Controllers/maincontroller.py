@@ -2,9 +2,9 @@ import tkinter as tk
 import tkinter.font
 
 import constants
-import endview
-import gameview
-import startview
+import Views.endview
+import Views.gameview
+import Views.startview
 
 
 class MainController(tk.Tk):
@@ -12,21 +12,24 @@ class MainController(tk.Tk):
         tk.Tk.__init__(self)
         self.geometry(constants.WINDOW_SIZE)
         self.resizable(False, False)
-        self.base_font = tk.font.Font(**constants.FONT_BASE)
-        self.title_font = tk.font.Font(**constants.FONT_TITLE)
-        self.secondary_font = tk.font.Font(**constants.FONT_SECONDARY)
-        self.monospace_font = tk.font.Font(**constants.FONT_MONOSPACE)
 
+        self.__fonts = {
+            "main": tk.font.Font(**constants.FONT_MAIN),
+            "title": tk.font.Font(**constants.FONT_TITLE),
+            "secondary": tk.font.Font(**constants.FONT_SECONDARY),
+            "monospace": tk.font.Font(**constants.FONT_MONOSPACE)
+        }
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         container.grid_configure(column=0, row=0)
 
-        self.frames = {}
         self.views = [
-            startview.StartView,
-            gameview.GameView,
-            endview.EndView
+            Views.startview.StartView,
+            Views.gameview.GameView,
+            Views.endview.EndView
         ]
+        self.frames = {}
+
         for F in self.views:
             self.frames[F.__name__] = F(parent=container, controller=self)
             self.frames[F.__name__].grid(row=0, column=0, sticky="nsew")
@@ -35,3 +38,9 @@ class MainController(tk.Tk):
 
     def show_frame(self, page_name):
         self.frames[page_name].tkraise()
+
+    def get_font(self, font_type):
+        return self.__fonts.get(font_type)
+
+    def create_server(self):
+        pass
