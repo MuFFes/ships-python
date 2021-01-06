@@ -1,6 +1,7 @@
 import tkinter as tk
 
 import constants
+import tkutils
 from battleships import infield, draw_tile
 
 
@@ -8,47 +9,41 @@ class GameView(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        canvas = tk.Canvas(self, width=constants.WINDOW_WIDTH_PX, height=constants.WINDOW_HEIGHT_PX, bg=constants.COLOR_MIDNIGHT_BLUE)
+        canvas = tk.Canvas(self, width=constants.WINDOW_WIDTH_PX, height=constants.WINDOW_HEIGHT_PX, bg=constants.COLOR_MIDNIGHT_BLUE, highlightthickness=0)
         canvas.pack()
-        canvas.create_text(275, 25, text="Your field:", font=controller.get_font("main"), fill=constants.COLOR_CLOUDS)
-        canvas.create_text(600, 25, text="Enemy's turn", font=controller.get_font("secondary"), fill=constants.COLOR_CLOUDS)
-        canvas.create_text(925, 25, text="Enemy's field:", font=controller.get_font("main"), fill=constants.COLOR_CLOUDS)
-        canvas.create_rectangle(0, 50, 550, 600, fill=constants.COLOR_SILVER, outline="")
-        canvas.create_rectangle(650, 50, 1200, 600, fill=constants.COLOR_SILVER, outline="")
+        canvas.create_text(275, 25, text="Your field:", font=tkutils.get_font("main"), fill=constants.COLOR_CLOUDS)
+        canvas.create_text(600, 25, text="Enemy's turn", font=tkutils.get_font("secondary"), fill=constants.COLOR_CLOUDS)
+        canvas.create_text(925, 25, text="Enemy's field:", font=tkutils.get_font("main"), fill=constants.COLOR_CLOUDS)
+
+        my_field_canvas_container = tk.Canvas(canvas, width=11 * constants.TILE_SIZE_PX, height=11 * constants.TILE_SIZE_PX, bg=constants.COLOR_SILVER, highlightthickness=0)
+        my_field_canvas_container.place(x=0, y=constants.TILE_SIZE_PX)
+
+        my_field_canvas = tk.Canvas(my_field_canvas_container, width=10 * constants.TILE_SIZE_PX, height=10 * constants.TILE_SIZE_PX, bg=constants.COLOR_SILVER, highlightthickness=0)
+        my_field_canvas.place(x=constants.TILE_SIZE_PX, y=constants.TILE_SIZE_PX)
+
+        enemy_field_canvas_container = tk.Canvas(canvas, width=11 * constants.TILE_SIZE_PX, height=11 * constants.TILE_SIZE_PX, bg=constants.COLOR_SILVER, highlightthickness=0)
+        enemy_field_canvas_container.place(x=13*constants.TILE_SIZE_PX, y=1*constants.TILE_SIZE_PX)
+
+        enemy_field_canvas = tk.Canvas(enemy_field_canvas_container, width=10 * constants.TILE_SIZE_PX, height=10 * constants.TILE_SIZE_PX, bg=constants.COLOR_SILVER, highlightthickness=0)
+        enemy_field_canvas.place(x=constants.TILE_SIZE_PX, y=constants.TILE_SIZE_PX)
 
         # init tiles
-        for field in range(2):
+        for x in range(10):
+            for y in range(10):
+                draw_tile(my_field_canvas, x, y, "", font=constants.FONT_MAIN)
+                draw_tile(enemy_field_canvas, x, y, "", font=constants.FONT_MAIN)
+
+        for field_container in [my_field_canvas_container, enemy_field_canvas_container]:
             for x in range(10):
-                for y in range(10):
-                    draw_tile(canvas, x, y, field, "", font=constants.FONT_MAIN)
+                field_container.create_line(0, (1 + x) * constants.TILE_SIZE_PX, 11 * constants.TILE_SIZE_PX, (1 + x) * constants.TILE_SIZE_PX, fill=constants.COLOR_MIDNIGHT_BLUE)
+                field_container.create_line((x + 1) * constants.TILE_SIZE_PX, 0, (x + 1) * constants.TILE_SIZE_PX, 12 * constants.TILE_SIZE_PX, fill=constants.COLOR_MIDNIGHT_BLUE)
+                field_container.create_text((x + 1.5) * constants.TILE_SIZE_PX, 0.5 * constants.TILE_SIZE_PX, text=chr(65 + x), font=tkutils.get_font("main"), fill=constants.COLOR_MIDNIGHT_BLUE)
+                field_container.create_text(0.5 * constants.TILE_SIZE_PX, (x + 1.5) * constants.TILE_SIZE_PX, text=1 + x, font=tkutils.get_font("main"), fill=constants.COLOR_MIDNIGHT_BLUE)
 
-        for x in range(10):
-            canvas.create_line(0, (2 + x) * constants.TILE_SIZE_PX, 11 * constants.TILE_SIZE_PX, (2 + x) * constants.TILE_SIZE_PX,
-                               fill=constants.COLOR_MIDNIGHT_BLUE)
-            canvas.create_line((1 + x) * constants.TILE_SIZE_PX, 1 * constants.TILE_SIZE_PX, (1 + x) * constants.TILE_SIZE_PX,
-                               12 * constants.TILE_SIZE_PX, fill=constants.COLOR_MIDNIGHT_BLUE)
-            canvas.create_text((x + 1.5) * constants.TILE_SIZE_PX, 1.5 * constants.TILE_SIZE_PX, text=chr(65 + x),
-                               font=controller.get_font("main"), fill=constants.COLOR_MIDNIGHT_BLUE)
-            canvas.create_text(0.5 * constants.TILE_SIZE_PX, (x + 2.5) * constants.TILE_SIZE_PX, text=1 + x,
-                               font=controller.get_font("main"),
-                               fill=constants.COLOR_MIDNIGHT_BLUE)
-
-        for x in range(10):
-            canvas.create_line((11 + constants.FIELD_SPACING) * constants.TILE_SIZE_PX, (2 + x) * constants.TILE_SIZE_PX,
-                               (22 + constants.FIELD_SPACING) * constants.TILE_SIZE_PX, (2 + x) * constants.TILE_SIZE_PX,
-                               fill=constants.COLOR_MIDNIGHT_BLUE)
-            canvas.create_line((12 + constants.FIELD_SPACING + x) * constants.TILE_SIZE_PX, 1 * constants.TILE_SIZE_PX,
-                               (12 + constants.FIELD_SPACING + x) * constants.TILE_SIZE_PX, 12 * constants.TILE_SIZE_PX,
-                               fill=constants.COLOR_MIDNIGHT_BLUE)
-            canvas.create_text((x + constants.FIELD_SPACING + 12.5) * constants.TILE_SIZE_PX, 1.5 * constants.TILE_SIZE_PX,
-                               text=chr(65 + x), font=controller.get_font("main"), fill=constants.COLOR_MIDNIGHT_BLUE)
-            canvas.create_text((constants.FIELD_SPACING + 11.5) * constants.TILE_SIZE_PX, (x + 2.5) * constants.TILE_SIZE_PX,
-                               text=1 + x, font=controller.get_font("main"), fill=constants.COLOR_MIDNIGHT_BLUE)
-
-        controller.bind('<Motion>', self.motion)
-
-    def motion(self, event):
-        if infield(event.x, event.y):
-            self.controller.config(cursor="pirate")
-        else:
-            self.controller.config(cursor="arrow")
+    #     controller.bind('<Motion>', self.motion)
+    #
+    # def motion(self, event):
+    #     if infield(event.x, event.y):
+    #         self.controller.config(cursor="hand2")
+    #     else:
+    #         self.controller.config(cursor="arrow")

@@ -9,10 +9,9 @@ class ClientConnection(connection.Connection):
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def connect(self):
+    def open(self):
         self.socket.connect((self.ip_address, self.port))
 
+    def close(self):
+        self.socket.close()
 
-if __name__ == "__main__":
-    connection = ClientConnection("192.168.0.14", 1233)
-    connection.connect()

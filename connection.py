@@ -3,7 +3,16 @@ import struct
 
 
 class Connection(abc.ABC):
+    @abc.abstractmethod
+    def open(self):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def close(self):
+        raise NotImplementedError()
+
     def send(self, message):
+        message = str(message)
         message = message.encode(encoding="utf-8")
         message = struct.pack('>I', len(message)) + message
         self.socket.sendall(message)
