@@ -8,19 +8,18 @@ from game import Orientation
 class GameView(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        canvas = tk.Canvas(self, width=c.WINDOW_WIDTH_PX, height=c.WINDOW_HEIGHT_PX, bg=c.COLOR_MIDNIGHT_BLUE, highlightthickness=0)
-        canvas.pack()
-        canvas.create_text(275, 25, text="Your field:", font=tkutils.get_font("main"), fill=c.COLOR_CLOUDS)
-        canvas.create_text(600, 25, text="Place your ships", font=tkutils.get_font("secondary"), fill=c.COLOR_CLOUDS)
-        canvas.create_text(925, 25, text="Enemy's field:", font=tkutils.get_font("main"), fill=c.COLOR_CLOUDS)
+        self.canvas = tk.Canvas(self, width=c.WINDOW_WIDTH_PX, height=c.WINDOW_HEIGHT_PX, bg=c.COLOR_MIDNIGHT_BLUE, highlightthickness=0)
+        self.canvas.pack()
+        self.canvas.create_text(275, 25, text="Your field:", font=tkutils.get_font("main"), fill=c.COLOR_CLOUDS)
+        self.canvas.create_text(925, 25, text="Enemy's field:", font=tkutils.get_font("main"), fill=c.COLOR_CLOUDS)
 
-        my_field_canvas_container = tk.Canvas(canvas, width=11 * c.TILE_SIZE_PX, height=11 * c.TILE_SIZE_PX, bg=c.COLOR_SILVER, highlightthickness=0)
+        my_field_canvas_container = tk.Canvas(self.canvas, width=11 * c.TILE_SIZE_PX, height=11 * c.TILE_SIZE_PX, bg=c.COLOR_SILVER, highlightthickness=0)
         my_field_canvas_container.place(x=0, y=c.TILE_SIZE_PX)
 
         self.my_field_canvas = tk.Canvas(my_field_canvas_container, width=10 * c.TILE_SIZE_PX, height=10 * c.TILE_SIZE_PX, bg=c.COLOR_SILVER, highlightthickness=0)
         self.my_field_canvas.place(x=c.TILE_SIZE_PX, y=c.TILE_SIZE_PX)
 
-        enemy_field_canvas_container = tk.Canvas(canvas, width=11 * c.TILE_SIZE_PX, height=11 * c.TILE_SIZE_PX, bg=c.COLOR_SILVER, highlightthickness=0)
+        enemy_field_canvas_container = tk.Canvas(self.canvas, width=11 * c.TILE_SIZE_PX, height=11 * c.TILE_SIZE_PX, bg=c.COLOR_SILVER, highlightthickness=0)
         enemy_field_canvas_container.place(x=13*c.TILE_SIZE_PX, y=1*c.TILE_SIZE_PX)
 
         self.enemy_field_canvas = tk.Canvas(enemy_field_canvas_container, width=10 * c.TILE_SIZE_PX, height=10 * c.TILE_SIZE_PX, bg=c.COLOR_SILVER, highlightthickness=0)
@@ -43,7 +42,7 @@ class GameView(tk.Frame):
         self.my_field_canvas.bind('<Button-1>', lambda event: controller.my_field_canvas_click(event))
         self.enemy_field_canvas.bind('<Motion>', lambda event: controller.enemy_field_canvas_mouse_motion(event))
         self.enemy_field_canvas.bind('<Button-1>', lambda event: controller.enemy_field_canvas_click(event))
-        canvas.bind_all('<Key>', lambda event: controller.key_press(event))
+        self.canvas.bind_all('<Key>', lambda event: controller.key_press(event))
 
     def update_my_field(self, game):
         font = tkutils.get_font("main")
@@ -57,9 +56,22 @@ class GameView(tk.Frame):
             for y in range(10):
                 draw_tile(self.enemy_field_canvas, x, y, game.enemy_field.get_state(x, y), font=font)
 
+    def update_caption(self, game):
+        self.canvas.create_rectangle(500, 0, 700, 50, fill=c.COLOR_MIDNIGHT_BLUE, outline="")
+        text = {
+            0: "Place your ships",
+            1: "Waiting for enemy",
+            2: "Your turn",
+            3: "Enemy's turn",
+            4: "You won!",
+            5: "You lost :(",
+        }[game.phase]
+        self.canvas.create_text(600, 25, text=text, font=tkutils.get_font("secondary"), fill=c.COLOR_CLOUDS)
+
     def update_view(self, game):
         self.update_my_field(game)
         self.update_enemy_field(game)
+        self.update_caption(game)
 
     def clear_ghost_ship(self, x, y, length, orientation):
         for i in range(length):

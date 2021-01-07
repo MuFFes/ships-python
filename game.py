@@ -11,10 +11,11 @@ class Orientation(enum.IntEnum):
 
 class GamePhase(enum.IntEnum):
     SETUP_SHIPS = 0
-    SHOOT = 1
-    WAIT_FOR_SHOT = 2
-    YOU_WON = 3
-    YOU_LOST = 4
+    SETUP_WAIT = 1
+    SHOOT = 2
+    WAIT_FOR_SHOT = 3
+    YOU_WON = 4
+    YOU_LOST = 5
 
 
 class Game:
@@ -24,7 +25,7 @@ class Game:
         self.priority = random.randint(-32767, 32768)
         self.enemy_priority = None
         self.phase = GamePhase.SETUP_SHIPS
-        self.ships_size = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self.ships_size = [4, 3, 2, 1]#[4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
         self.ship_orientation = Orientation.HORIZONTAL
         self.my_field = field.Field()
         self.enemy_field = field.Field()
@@ -53,15 +54,26 @@ class Game:
         return True
 
     def place_ship(self, x, y):
-        # Change state if all ships are already placed
-        if len(self.ships_size) == 0:
+        if self.validate_ship_position(x, y):
+            for i in range(self.ships_size.pop(0)):
+                if self.ship_orientation == Orientation.HORIZONTAL:
+                    self.my_field.ships.append(field.Point(x + i, y))
+                if self.ship_orientation == Orientation.VERTICAL:
+                    self.my_field.ships.append(field.Point(x, y + i))
+            # Change state if all ships are already placed
+            if len(self.ships_size) == 0:
+                self.phase = GamePhase.SETUP_WAIT
+            return True
+        else:
+            return False
+
+    def finish_setup(self):
+        self.connection.send("finished")
+        if self.connection.receive() == "finished":
             if self.priority > self.enemy_priority or (self.priority == self.enemy_priority and self.is_server is True):
                 self.phase = GamePhase.SHOOT
             else:
                 self.phase = GamePhase.WAIT_FOR_SHOT
-        else:
-            length = self.ships_size[0]
-            self.validate_ship_position(x, y)
 
     def step(self):
         pass
