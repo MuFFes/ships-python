@@ -19,7 +19,7 @@ class MainApplication:
             gameview.GameView,
         ]
         self.frames = {}
-
+        self.mouse_position = (-1, -1)
         self.__setup_views()
         self.__show_frame("StartView")
 
@@ -52,16 +52,37 @@ class MainApplication:
     def my_field_canvas_click(self, event):
         pass
 
-    def my_field_canvas_mouse_move(self, event):
-        pass
+    def my_field_canvas_mouse_motion(self, event):
+        if self.game.phase == game.GamePhase.SETUP_SHIPS:
+            (x, y) = (event.x // constants.TILE_SIZE_PX, event.y // constants.TILE_SIZE_PX)
+            if self.mouse_position != (x, y):
+                if self.game.validate_ship_position(x, y):
+                    self.root.configure(cursor="hand2")
+                    self.frames["GameView"].clear_ghost_ship(self.mouse_position[0], self.mouse_position[1],
+                                                             self.game.ships_size[0], self.game.ship_orientation)
+                    self.mouse_position = (x, y)
+                    self.frames["GameView"].show_ghost_ship(x, y, self.game.ships_size[0], self.game.ship_orientation)
+                else:
+                    self.root.configure(cursor="arrow")
+        else:
+            self.frames["GameView"].my_field_canvas.unbind("<Motion>")
 
     def enemy_field_canvas_click(self, event):
         self.game.shoot(event.x // constants.TILE_SIZE_PX,
                         event.y // constants.TILE_SIZE_PX)
         self.frames["GameView"].update_view(self.game)
 
-    def enemy_field_canvas_mouse_move(self, event):
+    def enemy_field_canvas_mouse_motion(self, event):
         pass
+
+    def key_press(self, event):
+        if self.game.phase == game.GamePhase.SETUP_SHIPS:
+            self.game.ship_orientation = (self.game.ship_orientation + 1) % 2
+            self.frames["GameView"].update_view(self.game)
+            if self.game.validate_ship_position(self.mouse_position[0], self.mouse_position[1]):
+                self.frames["GameView"].show_ghost_ship(self.mouse_position[0], self.mouse_position[1], self.game.ships_size[0], self.game.ship_orientation)
+        else:
+            self.frames["GameView"].canvas.unbind("<Key>")
 
 
 if __name__ == '__main__':

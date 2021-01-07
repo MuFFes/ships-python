@@ -2,6 +2,7 @@ import tkinter as tk
 
 import constants as c
 import tkutils
+from game import Orientation
 
 
 class GameView(tk.Frame):
@@ -38,25 +39,41 @@ class GameView(tk.Frame):
                 draw_tile(self.my_field_canvas, x, y, "", font=tkutils.get_font("main"))
                 draw_tile(self.enemy_field_canvas, x, y, "", font=tkutils.get_font("main"))
 
-        canvas.bind('<Button-1>', lambda event: controller.shoot(event))
+        self.my_field_canvas.bind('<Motion>', lambda event: controller.my_field_canvas_mouse_motion(event))
+        self.my_field_canvas.bind('<Button-1>', lambda event: controller.my_field_canvas_click(event))
+        self.enemy_field_canvas.bind('<Motion>', lambda event: controller.enemy_field_canvas_mouse_motion(event))
+        self.enemy_field_canvas.bind('<Button-1>', lambda event: controller.enemy_field_canvas_click(event))
+        canvas.bind_all('<Key>', lambda event: controller.key_press(event))
 
-        self.my_field_canvas.bind('<Enter>', lambda event: change_cursor(controller, cursor="hand2"))
-        self.my_field_canvas.bind('<Leave>', lambda event: change_cursor(controller, cursor="arrow"))
-        self.enemy_field_canvas.bind('<Enter>', lambda event: change_cursor(controller, cursor="hand2"))
-        self.enemy_field_canvas.bind('<Leave>', lambda event: change_cursor(controller, cursor="arrow"))
-
-    def update_view(self, game):
+    def update_my_field(self, game):
+        font = tkutils.get_font("main")
         for x in range(10):
             for y in range(10):
-                draw_tile(self.my_field_canvas, x, y, game.my_field.get_state(x, y), font=tkutils.get_font("main"))
-                draw_tile(self.enemy_field_canvas, x, y, game.enemy_field.get_state(x, y), font=tkutils.get_font("main"))
+                draw_tile(self.my_field_canvas, x, y, game.my_field.get_state(x, y), font=font)
 
-    def update_fields(self):
-        pass
+    def update_enemy_field(self, game):
+        font = tkutils.get_font("main")
+        for x in range(10):
+            for y in range(10):
+                draw_tile(self.enemy_field_canvas, x, y, game.enemy_field.get_state(x, y), font=font)
 
+    def update_view(self, game):
+        self.update_my_field(game)
+        self.update_enemy_field(game)
 
-def change_cursor(controller, cursor):
-    controller.root.config(cursor=cursor)
+    def clear_ghost_ship(self, x, y, length, orientation):
+        for i in range(length):
+            if orientation == Orientation.HORIZONTAL:
+                draw_tile(self.my_field_canvas, x + i, y, "", font=tkutils.get_font("main"))
+            else:
+                draw_tile(self.my_field_canvas, x, y + i, "", font=tkutils.get_font("main"))
+
+    def show_ghost_ship(self, x, y, length, orientation):
+        for i in range(length):
+            if orientation == Orientation.HORIZONTAL:
+                draw_tile(self.my_field_canvas, x + i, y, "g", font=tkutils.get_font("main"))
+            else:
+                draw_tile(self.my_field_canvas, x, y + i, "g", font=tkutils.get_font("main"))
 
 
 def draw_tile(canvas, x, y, tile_state, font):
@@ -67,11 +84,13 @@ def draw_tile(canvas, x, y, tile_state, font):
         color = c.COLOR_PETER_RIVER
     if tile_state == ".":
         color = c.COLOR_CONCRETE
+        tile_state = "∙"
+    if tile_state == "g":
+        color = c.COLOR_PETER_RIVER_05
+        tile_state = ""
     canvas.create_rectangle(c.TILE_SIZE_PX * x, c.TILE_SIZE_PX * y,
                             c.TILE_SIZE_PX * (x + 1), c.TILE_SIZE_PX * (y + 1),
                             fill=color, outline=c.COLOR_MIDNIGHT_BLUE)
-    if tile_state == ".":
-        tile_state = "∙"
     canvas.create_text((x + 0.5) * c.TILE_SIZE_PX, (y + 0.5) * c.TILE_SIZE_PX, text=tile_state,
                        font=font, fill=c.COLOR_MIDNIGHT_BLUE)
 

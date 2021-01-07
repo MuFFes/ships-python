@@ -4,12 +4,12 @@ import enum
 import field
 
 
-class Orientation(enum.Enum):
+class Orientation(enum.IntEnum):
     HORIZONTAL = 0
     VERTICAL = 1
 
 
-class GamePhase(enum.Enum):
+class GamePhase(enum.IntEnum):
     SETUP_SHIPS = 0
     SHOOT = 1
     WAIT_FOR_SHOT = 2
@@ -34,24 +34,34 @@ class Game:
         self.connection.send(self.priority)
         self.enemy_priority = int(self.connection.receive())
 
-        # if self.priority > self.enemy_priority or (self.priority == self.enemy_priority and self.is_server is True):
-        #     self.is_active = True
-        # else:
-        #     self.is_active = False
-        #     self.wait_for_shot()
-
     def shoot(self, x, y):
         tile_state = self.enemy_field.get_state(x, y)
         if tile_state == 0:
             pass
 
-
     def wait_for_shot(self):
         coords = self.connection.receive()
 
-    def place_ship(self, x, y):
-        pass
+    def validate_ship_position(self, x, y) -> bool:
+        for i in range(self.ships_size[0]):
+            if self.ship_orientation == Orientation.HORIZONTAL:
+                if self.my_field.check_collision(x + i, y):
+                    return False
+            if self.ship_orientation == Orientation.VERTICAL:
+                if self.my_field.check_collision(x, y + i):
+                    return False
+        return True
 
+    def place_ship(self, x, y):
+        # Change state if all ships are already placed
+        if len(self.ships_size) == 0:
+            if self.priority > self.enemy_priority or (self.priority == self.enemy_priority and self.is_server is True):
+                self.phase = GamePhase.SHOOT
+            else:
+                self.phase = GamePhase.WAIT_FOR_SHOT
+        else:
+            length = self.ships_size[0]
+            self.validate_ship_position(x, y)
 
     def step(self):
         pass
