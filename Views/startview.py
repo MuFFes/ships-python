@@ -45,7 +45,7 @@ class StartView(tk.Frame):
         tk.Entry(port_frame, textvariable=port_string, font=monospace_font, width=5).pack(side="left")
 
         # Create game button
-        tk.Button(row1, text="Create", font=secondary_font, command=lambda: controller.create_game(port_string.get()), width=10).pack(side="left", padx=30)
+        tk.Button(row1, text="Create", font=secondary_font, command=lambda: controller.create_game_button_click(port_string.get()), width=10).pack(side="left", padx=30)
 
         # Second row container
         row2 = tk.Frame(self, bg=c.COLOR_MIDNIGHT_BLUE)
@@ -78,4 +78,4 @@ class StartView(tk.Frame):
         tk.Entry(port_frame2, textvariable=port_string2, font=monospace_font, width=5).pack(side="left")
 
         # Join game button
-        tk.Button(row2, text="Join", font=secondary_font, command=lambda: controller.join_game(ip_string.get(), port_string2.get()), width=10).pack(side="left", padx=30)
+        tk.Button(row2, text="Join", font=secondary_font, command=lambda: controller.join_game_button_click(ip_string.get(), port_string2.get()), width=10).pack(side="left", padx=30)

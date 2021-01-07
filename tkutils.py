@@ -2,6 +2,8 @@ import tkinter as tk
 import tkinter.font
 import constants
 
+# TODO: STORE FONTS
+
 
 def character_limit(entry_text, limit):
     if len(entry_text.get()) > 0:
