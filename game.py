@@ -10,12 +10,13 @@ class Orientation(enum.IntEnum):
 
 
 class GamePhase(enum.IntEnum):
-    SETUP_SHIPS = 0
-    SETUP_WAIT = 1
-    SHOOT = 2
-    WAIT_FOR_SHOT = 3
-    YOU_WON = 4
-    YOU_LOST = 5
+    WAIT_FOR_CONNECTION = 0
+    SETUP_SHIPS = 1
+    SETUP_WAIT = 2
+    SHOOT = 3
+    WAIT_FOR_SHOT = 4
+    YOU_WON = 5
+    YOU_LOST = 6
 
 
 class Game:
@@ -24,17 +25,21 @@ class Game:
         self.is_server = is_server
         self.priority = random.randint(-32767, 32768)
         self.enemy_priority = None
-        self.phase = GamePhase.SETUP_SHIPS
+        self.phase = GamePhase.WAIT_FOR_CONNECTION
         self.ships_size = [4, 3, 2, 1]  # [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
         self.ship_orientation = Orientation.HORIZONTAL
         self.my_field = field.Field()
         self.enemy_field = field.Field()
         self.update_pending = False
 
-    def start(self):
+    def start(self, queue=None):
         self.connection.open()
+        self.phase = GamePhase.SETUP_SHIPS
+        self.update_pending = True
         self.connection.send(self.priority)
         self.enemy_priority = int(self.connection.receive())
+        if queue:
+            queue.put("Task finished")
 
     def shoot(self, queue, x, y):
         tile_state = self.enemy_field.get_state(x, y)

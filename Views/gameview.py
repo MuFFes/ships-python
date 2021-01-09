@@ -59,12 +59,13 @@ class GameView(tk.Frame):
     def update_caption(self, game):
         self.canvas.create_rectangle(500, 0, 700, 50, fill=c.COLOR_MIDNIGHT_BLUE, outline="")
         text = {
-            0: "Place your ships",
-            1: "Waiting for enemy",
-            2: "Your turn",
-            3: "Enemy's turn",
-            4: "You won!",
-            5: "You lost :(",
+            0: "Waiting for connection",
+            1: "Place your ships",
+            2: "Waiting for enemy",
+            3: "Your turn",
+            4: "Enemy's turn",
+            5: "You won!",
+            6: "You lost :(",
         }[game.phase]
         self.canvas.create_text(600, 25, text=text, font=tkutils.get_font("secondary"), fill=c.COLOR_CLOUDS)
 

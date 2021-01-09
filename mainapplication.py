@@ -22,14 +22,15 @@ class MainApplication:
             gameview.GameView,
         ]
         self.frames = {}
+        # For drawing 'ghost' ship:
         self.__mouse_position = (-1, -1)
         self.__placed = False
-        # For multithreading
+        # For multithreading:
         self.queue = queue.Queue()
+        self.__update_gameview()
 
         self.__setup_views()
         self.__show_frame("StartView")
-        self.__update_gameview()
 
     def __update_gameview(self):
         if self.game:
@@ -50,24 +51,24 @@ class MainApplication:
     def __show_frame(self, page_name):
         self.frames[page_name].tkraise()
 
-    def process_queue(self, callback=None):
+    def __process_queue(self, callback=None):
         try:
             msg = self.queue.get(block=False)
             if callback:
                 callback()
         except queue.Empty:
-            self.root.after(100, lambda: self.process_queue(callback))
+            self.root.after(100, lambda: self.__process_queue(callback))
 
-    def start_threaded_task(self, task, args, callback=None):
+    def __start_threaded_task(self, task, args=(), callback=None):
         thread = threading.Thread(target=task, args=(self.queue, *args), daemon=True)
         thread.start()
-        self.process_queue(callback)
+        self.__process_queue(callback)
 
     def create_game_button_click(self, port_string):
         connection = serverconnection.ServerConnection(int(port_string))
         self.game = game.Game(connection=connection, is_server=True)
         self.__show_frame("GameView")
-        self.game.start()
+        self.__start_threaded_task(task=self.game.start)
         self.frames["GameView"].update_view(self.game)
 
     def join_game_button_click(self, ip_string, port_string):
@@ -85,7 +86,9 @@ class MainApplication:
                 self.__placed = True
 
                 if self.game.phase == game.GamePhase.SETUP_WAIT:
-                    self.start_threaded_task(task=self.game.finish_setup, args=())
+                    self.__start_threaded_task(task=self.game.finish_setup, args=())
+        elif self.game.phase == game.GamePhase.WAIT_FOR_CONNECTION:
+            pass
         else:
             self.frames["GameView"].my_field_canvas.unbind("<Button-1>")
 
@@ -102,13 +105,15 @@ class MainApplication:
                     self.__placed = False
                     self.__mouse_position = (x, y)
                     self.frames["GameView"].show_ghost_ship(x, y, self.game.ships_size[0], self.game.ship_orientation)
+        elif self.game.phase == game.GamePhase.WAIT_FOR_CONNECTION:
+            pass
         else:
             self.frames["GameView"].my_field_canvas.unbind("<Motion>")
 
     def enemy_field_canvas_click(self, event):
         if self.game.phase == game.GamePhase.SHOOT:
             (x, y) = (event.x // constants.TILE_SIZE_PX, event.y // constants.TILE_SIZE_PX)
-            self.start_threaded_task(task=self.game.shoot, args=(x, y))
+            self.__start_threaded_task(task=self.game.shoot, args=(x, y))
 
     def enemy_field_canvas_mouse_motion(self, event):
         if self.game.phase == game.GamePhase.SHOOT:
