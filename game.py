@@ -25,23 +25,44 @@ class Game:
         self.priority = random.randint(-32767, 32768)
         self.enemy_priority = None
         self.phase = GamePhase.SETUP_SHIPS
-        self.ships_size = [4, 3, 2, 1]#[4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self.ships_size = [4, 3, 2, 1]  # [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
         self.ship_orientation = Orientation.HORIZONTAL
         self.my_field = field.Field()
         self.enemy_field = field.Field()
+        self.update_pending = False
 
     def start(self):
         self.connection.open()
         self.connection.send(self.priority)
         self.enemy_priority = int(self.connection.receive())
 
-    def shoot(self, x, y):
+    def shoot(self, queue, x, y):
         tile_state = self.enemy_field.get_state(x, y)
-        if tile_state == 0:
-            pass
+        if tile_state is not ".":
+            message = str(x) + str(y)
+            self.connection.send(message)
+            response = self.connection.receive()
+            self.enemy_field.shots.append(field.Point(x, y))
+            if response == "X":
+                self.enemy_field.ships.append(field.Point(x, y))
+            else:
+                self.phase = GamePhase.WAIT_FOR_SHOT
+                self.wait_for_shot()
+            self.update_pending = True
+        queue.put("Task finished")
 
     def wait_for_shot(self):
-        coords = self.connection.receive()
+        self.update_pending = True
+        if self.phase == GamePhase.WAIT_FOR_SHOT:
+            coords = self.connection.receive()
+            (x, y) = (int(coords[0]), int(coords[1]))
+            self.my_field.shots.append(field.Point(x, y))
+            state = self.my_field.get_state(x, y)
+            self.connection.send(state)
+            if state == "X":
+                self.wait_for_shot()
+            self.phase = GamePhase.SHOOT
+            self.update_pending = True
 
     def validate_ship_position(self, x, y) -> bool:
         for i in range(self.ships_size[0]):
@@ -67,19 +88,16 @@ class Game:
         else:
             return False
 
-    def finish_setup(self):
+    def finish_setup(self, queue):
         self.connection.send("finished")
         if self.connection.receive() == "finished":
             if self.priority > self.enemy_priority or (self.priority == self.enemy_priority and self.is_server is True):
                 self.phase = GamePhase.SHOOT
+                self.update_pending = True
             else:
                 self.phase = GamePhase.WAIT_FOR_SHOT
-
-    def step(self):
-        pass
-
-    def draw(self):
-        pass
+                self.wait_for_shot()
+        queue.put("Task finished")
 
     def end(self):
         pass

@@ -1,4 +1,6 @@
 import tkinter as tk
+import threading
+import queue
 
 import assets
 import constants
@@ -22,8 +24,19 @@ class MainApplication:
         self.frames = {}
         self.__mouse_position = (-1, -1)
         self.__placed = False
+        # For multithreading
+        self.queue = queue.Queue()
+
         self.__setup_views()
         self.__show_frame("StartView")
+        self.__update_gameview()
+
+    def __update_gameview(self):
+        if self.game:
+            if self.game.update_pending:
+                self.frames["GameView"].update_view(self.game)
+                self.game.update_pending = False
+        self.root.after(50, self.__update_gameview)
 
     def __setup_views(self):
         container = tk.Frame(self.root)
@@ -36,6 +49,19 @@ class MainApplication:
 
     def __show_frame(self, page_name):
         self.frames[page_name].tkraise()
+
+    def process_queue(self, callback=None):
+        try:
+            msg = self.queue.get(block=False)
+            if callback:
+                callback()
+        except queue.Empty:
+            self.root.after(100, lambda: self.process_queue(callback))
+
+    def start_threaded_task(self, task, args, callback=None):
+        thread = threading.Thread(target=task, args=(self.queue, *args), daemon=True)
+        thread.start()
+        self.process_queue(callback)
 
     def create_game_button_click(self, port_string):
         connection = serverconnection.ServerConnection(int(port_string))
@@ -59,10 +85,7 @@ class MainApplication:
                 self.__placed = True
 
                 if self.game.phase == game.GamePhase.SETUP_WAIT:
-                    self.root.update_idletasks() # Needed to update screen before freeze
-                    self.game.finish_setup()
-
-                    self.frames["GameView"].update_view(self.game)
+                    self.start_threaded_task(task=self.game.finish_setup, args=())
         else:
             self.frames["GameView"].my_field_canvas.unbind("<Button-1>")
 
@@ -70,6 +93,7 @@ class MainApplication:
         if self.game.phase == game.GamePhase.SETUP_SHIPS:
             (x, y) = (event.x // constants.TILE_SIZE_PX, event.y // constants.TILE_SIZE_PX)
             if self.__mouse_position != (x, y):
+                self.root.configure(cursor="arrow")
                 if self.game.validate_ship_position(x, y):
                     self.root.configure(cursor="hand2")
                     if not self.__placed:
@@ -78,18 +102,19 @@ class MainApplication:
                     self.__placed = False
                     self.__mouse_position = (x, y)
                     self.frames["GameView"].show_ghost_ship(x, y, self.game.ships_size[0], self.game.ship_orientation)
-                else:
-                    self.root.configure(cursor="arrow")
         else:
             self.frames["GameView"].my_field_canvas.unbind("<Motion>")
 
     def enemy_field_canvas_click(self, event):
-        self.game.shoot(event.x // constants.TILE_SIZE_PX,
-                        event.y // constants.TILE_SIZE_PX)
-        self.frames["GameView"].update_view(self.game)
+        if self.game.phase == game.GamePhase.SHOOT:
+            (x, y) = (event.x // constants.TILE_SIZE_PX, event.y // constants.TILE_SIZE_PX)
+            self.start_threaded_task(task=self.game.shoot, args=(x, y))
 
     def enemy_field_canvas_mouse_motion(self, event):
-        pass
+        if self.game.phase == game.GamePhase.SHOOT:
+            self.root.configure(cursor="hand2")
+        else:
+            self.root.configure(cursor="arrow")
 
     def key_press(self, event):
         if self.game.phase == game.GamePhase.SETUP_SHIPS:
