@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 import threading
 import queue
@@ -51,18 +52,18 @@ class MainApplication:
     def __show_frame(self, page_name):
         self.frames[page_name].tkraise()
 
-    def __process_queue(self, callback=None):
+    def __process_queue(self):
         try:
             msg = self.queue.get(block=False)
-            if callback:
-                callback()
+            if "error" in msg:
+                sys.exit(msg)
         except queue.Empty:
-            self.root.after(100, lambda: self.__process_queue(callback))
+            self.root.after(100, lambda: self.__process_queue())
 
     def __start_threaded_task(self, task, args=(), callback=None):
         thread = threading.Thread(target=task, args=(self.queue, *args), daemon=True)
         thread.start()
-        self.__process_queue(callback)
+        self.__process_queue()
 
     def create_game_button_click(self, port_string):
         connection = serverconnection.ServerConnection(int(port_string))
@@ -75,7 +76,7 @@ class MainApplication:
         connection = clientconnection.ClientConnection(ip_string, int(port_string))
         self.game = game.Game(connection=connection, is_server=False)
         self.__show_frame("GameView")
-        self.game.start()
+        self.__start_threaded_task(task=self.game.start)
         self.frames["GameView"].update_view(self.game)
 
     def my_field_canvas_click(self, event):

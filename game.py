@@ -1,6 +1,5 @@
 import random
 import enum
-
 import field
 
 
@@ -32,14 +31,17 @@ class Game:
         self.enemy_field = field.Field()
         self.update_pending = False
 
-    def start(self, queue=None):
-        self.connection.open()
+    def start(self, queue):
+        try:
+            self.connection.open()
+        except ConnectionRefusedError:
+            queue.put("Connection error")
+            return
         self.phase = GamePhase.SETUP_SHIPS
         self.update_pending = True
         self.connection.send(self.priority)
         self.enemy_priority = int(self.connection.receive())
-        if queue:
-            queue.put("Task finished")
+        queue.put("Task finished")
 
     def shoot(self, queue, x, y):
         tile_state = self.enemy_field.get_state(x, y)
