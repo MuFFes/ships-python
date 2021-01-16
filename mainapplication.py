@@ -86,7 +86,7 @@ class MainApplication:
                 self.__placed = True
 
                 if self.game.phase == game.GamePhase.SETUP_WAIT:
-                    self.__start_threaded_task(task=self.game.finish_setup, args=())
+                    self.__start_threaded_task(task=self.game.finish_setup)
         elif self.game.phase == game.GamePhase.WAIT_FOR_CONNECTION:
             pass
         else:
@@ -122,13 +122,14 @@ class MainApplication:
             self.root.configure(cursor="arrow")
 
     def key_press(self, event):
-        if self.game.phase == game.GamePhase.SETUP_SHIPS:
-            self.game.ship_orientation = (self.game.ship_orientation + 1) % 2
-            self.frames["GameView"].update_view(self.game)
-            if self.game.validate_ship_position(self.__mouse_position[0], self.__mouse_position[1]):
-                self.frames["GameView"].show_ghost_ship(self.__mouse_position[0], self.__mouse_position[1], self.game.ships_size[0], self.game.ship_orientation)
-        else:
-            self.frames["GameView"].canvas.unbind("<Key>")
+        if self.game:
+            if self.game.phase == game.GamePhase.SETUP_SHIPS:
+                self.game.ship_orientation = (self.game.ship_orientation + 1) % 2
+                self.frames["GameView"].update_view(self.game)
+                if self.game.validate_ship_position(self.__mouse_position[0], self.__mouse_position[1]):
+                    self.frames["GameView"].show_ghost_ship(self.__mouse_position[0], self.__mouse_position[1], self.game.ships_size[0], self.game.ship_orientation)
+            else:
+                self.frames["GameView"].canvas.unbind("<Key>")
 
 
 if __name__ == '__main__':

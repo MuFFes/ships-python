@@ -26,7 +26,7 @@ class Game:
         self.priority = random.randint(-32767, 32768)
         self.enemy_priority = None
         self.phase = GamePhase.WAIT_FOR_CONNECTION
-        self.ships_size = [4, 3, 2, 1]  # [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self.ships_size = [4]   # [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
         self.ship_orientation = Orientation.HORIZONTAL
         self.my_field = field.Field()
         self.enemy_field = field.Field()
@@ -48,8 +48,12 @@ class Game:
             self.connection.send(message)
             response = self.connection.receive()
             self.enemy_field.shots.append(field.Point(x, y))
-            if response == "X":
+            if response == "X" or response == "Z":
                 self.enemy_field.ships.append(field.Point(x, y))
+                if response == "Z":
+                    self.enemy_field.drown(x, y)
+                    if self.connection.receive() == "end":
+                        self.phase = GamePhase.YOU_WON
             else:
                 self.phase = GamePhase.WAIT_FOR_SHOT
                 self.wait_for_shot()
@@ -63,9 +67,24 @@ class Game:
             (x, y) = (int(coords[0]), int(coords[1]))
             self.my_field.shots.append(field.Point(x, y))
             state = self.my_field.get_state(x, y)
-            self.connection.send(state)
             if state == "X":
+                if self.my_field.is_drowned(x, y):
+                    self.my_field.drown(x, y)
+                    state = "Z"
+            self.connection.send(state)
+            # Check if all ships are drowned
+            if state == "Z":
+                if all(s in self.my_field.shots for s in self.my_field.ships):
+                    self.connection.send("end")
+                    self.phase = GamePhase.YOU_LOST
+                    self.update_pending = True
+                else:
+                    self.connection.send("continue")
+
+            if state == "X" or state == "Z":
                 self.wait_for_shot()
+                if self.phase == GamePhase.YOU_LOST:
+                    return
             self.phase = GamePhase.SHOOT
             self.update_pending = True
 
