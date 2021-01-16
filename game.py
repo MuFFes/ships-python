@@ -25,7 +25,7 @@ class Game:
         self.priority = random.randint(-32767, 32768)
         self.enemy_priority = None
         self.phase = GamePhase.WAIT_FOR_CONNECTION
-        self.ships_size = [4]   # [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self.ships_size = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
         self.ship_orientation = Orientation.HORIZONTAL
         self.my_field = field.Field()
         self.enemy_field = field.Field()
@@ -34,13 +34,13 @@ class Game:
     def start(self, queue):
         try:
             self.connection.open()
-        except ConnectionRefusedError:
+            self.phase = GamePhase.SETUP_SHIPS
+            self.update_pending = True
+            self.connection.send(self.priority)
+            self.enemy_priority = int(self.connection.receive())
+        except (ConnectionRefusedError, ConnectionAbortedError):
             queue.put("Connection error")
             return
-        self.phase = GamePhase.SETUP_SHIPS
-        self.update_pending = True
-        self.connection.send(self.priority)
-        self.enemy_priority = int(self.connection.receive())
         queue.put("Task finished")
 
     def shoot(self, queue, x, y):
@@ -50,7 +50,7 @@ class Game:
             self.connection.send(message)
             response = self.connection.receive()
             self.enemy_field.shots.append(field.Point(x, y))
-            if response == "X" or response == "Z":
+            if response in ["X", "Z"]:
                 self.enemy_field.ships.append(field.Point(x, y))
                 if response == "Z":
                     self.enemy_field.drown(x, y)
@@ -111,8 +111,7 @@ class Game:
             if len(self.ships_size) == 0:
                 self.phase = GamePhase.SETUP_WAIT
             return True
-        else:
-            return False
+        return False
 
     def finish_setup(self, queue):
         self.connection.send("finished")
@@ -124,6 +123,3 @@ class Game:
                 self.phase = GamePhase.WAIT_FOR_SHOT
                 self.wait_for_shot()
         queue.put("Task finished")
-
-    def end(self):
-        pass
