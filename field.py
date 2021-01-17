@@ -41,14 +41,16 @@ class Field:
         return ship
 
     def is_drowned(self, x, y) -> bool:
+        if len(self.get_ship(x, y)) == 0:
+            return False
         if any(s not in self.shots for s in self.get_ship(x, y)):
             return False
         return True
 
     def drown(self, x, y):
         for point in self.get_ship(x, y):
-            for i in range(-1, 2, 1):
-                for j in range(-1, 2, 1):
-                    if Point(point.x + i, point.y + j) not in self.shots:
-                        if Point(point.x + i, point.y + j) not in self.ships:
-                            self.shots.append(Point(point.x + i, point.y + j))
+            for dx in range(-1, 2, 1):
+                for dy in range(-1, 2, 1):
+                    if Point(point.x + dx, point.y + dy) not in self.shots:
+                        if Point(point.x + dx, point.y + dy) not in self.ships:
+                            self.shots.append(Point(point.x + dx, point.y + dy))
