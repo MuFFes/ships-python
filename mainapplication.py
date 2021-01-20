@@ -60,7 +60,7 @@ class MainApplication:
         except queue.Empty:
             self.root.after(100, lambda: self.__process_queue())
 
-    def __start_threaded_task(self, task, args=(), callback=None):
+    def __start_threaded_task(self, task, args=()):
         thread = threading.Thread(target=task, args=(self.queue, *args), daemon=True)
         thread.start()
         self.__process_queue()

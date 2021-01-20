@@ -45,7 +45,7 @@ class Game:
 
     def shoot(self, queue, x, y):
         tile_state = self.enemy_field.get_state(x, y)
-        if tile_state is not ".":
+        if tile_state != ".":
             message = str(x) + str(y)
             self.connection.send(message)
             response = self.connection.receive()
